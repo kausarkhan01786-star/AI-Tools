@@ -4,6 +4,7 @@ import path from "path";
 import multer from "multer";
 import fs from "fs";
 import FormData from "form-data";
+import axios from "axios";
 
 async function startServer() {
   const app = express();
@@ -19,72 +20,74 @@ async function startServer() {
   // API routes
   app.post("/api/remove-bg", upload.single("image"), async (req, res) => {
     try {
-      console.log("Received background removal request");
+      console.log("--- New Background Removal Request ---");
       if (!req.file) {
-        console.error("No file in request");
-        return res.status(400).json({ error: "No image uploaded" });
+        console.error("No file received in the request");
+        return res.status(400).json({ error: "No image uploaded. Please select an image." });
       }
+
+      console.log("File received:", {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        path: req.file.path
+      });
 
       // Use environment variable if available, otherwise use the provided fallback key
       const apiKey = process.env.PHOTOROOM_API_KEY || "sk_pr_backgroundremover_82da5717efd8ce6e7080e40b68a4616dfb293f00";
       
-      if (!apiKey) {
-        console.error("PHOTOROOM_API_KEY is not set in environment variables");
-        return res.status(500).json({ error: "Background removal service is not configured. Please check Vercel environment variables." });
+      if (!apiKey || apiKey === "YOUR_PHOTOROOM_API_KEY_HERE") {
+        console.error("PHOTOROOM_API_KEY is missing or invalid");
+        return res.status(500).json({ error: "Photoroom API key is not configured. Please add PHOTOROOM_API_KEY to Vercel environment variables." });
       }
 
+      console.log("Reading file from disk...");
       const fileBuffer = fs.readFileSync(req.file.path);
+      
       const formData = new FormData();
       formData.append("image_file", fileBuffer, {
         filename: req.file.originalname,
         contentType: req.file.mimetype,
       });
 
-      console.log("Calling Photoroom API with file:", req.file.originalname, "type:", req.file.mimetype);
+      console.log("Sending request to Photoroom API using Axios...");
       
-      const buffer = formData.getBuffer();
-      const response = await fetch("https://sdk.photoroom.com/v1/segment", {
-        method: "POST",
+      const response = await axios.post("https://sdk.photoroom.com/v1/segment", formData, {
         headers: {
           "x-api-key": apiKey,
           ...formData.getHeaders(),
-          "Content-Length": buffer.length.toString(),
         },
-        body: buffer,
+        responseType: "arraybuffer",
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          errorData = { message: errorText };
-        }
-        
-        console.error("Photoroom API error status:", response.status);
-        console.error("Photoroom API error data:", errorData);
-        
-        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        
-        return res.status(response.status).json({ 
-          error: errorData.message || errorData.error || `Photoroom API Error (${response.status})`, 
-          details: errorData 
-        });
-      }
-
-      console.log("Photoroom API success, sending image back");
-      const imageBuffer = await response.arrayBuffer();
+      console.log("Photoroom API success, status:", response.status);
+      
+      // Cleanup
       if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       
+      console.log("Sending processed image back to client");
       res.set("Content-Type", "image/png");
-      res.send(Buffer.from(imageBuffer));
+      res.send(Buffer.from(response.data));
     } catch (error: any) {
-      console.error("Server error:", error);
+      console.error("CRITICAL SERVER ERROR:", error.response?.data ? error.response.data.toString() : error.message);
+      
       if (req.file && fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
       }
-      res.status(500).json({ error: error.message || "Internal server error" });
+
+      const status = error.response?.status || 500;
+      let errorMessage = error.message;
+
+      if (error.response?.data) {
+        try {
+          const errorData = JSON.parse(error.response.data.toString());
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = error.response.data.toString() || errorMessage;
+        }
+      }
+
+      res.status(status).json({ error: `Photoroom Error: ${errorMessage}` });
     }
   });
 
