@@ -8,6 +8,7 @@ import {
   Loader2, 
   Sparkles
 } from 'lucide-react';
+import { GoogleGenAI } from "@google/genai";
 
 export default function BGRemover() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -29,23 +30,49 @@ export default function BGRemover() {
     reader.readAsDataURL(file);
 
     setIsProcessing(true);
-    const formData = new FormData();
-    formData.append('image', file);
-
+    
     try {
-      const response = await fetch('/api/remove-bg', {
-        method: 'POST',
-        body: formData,
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_CHAT || process.env.GEMINI_API_KEY_WATERMARK });
+      
+      // Convert file to base64
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      
+      const base64Data = await base64Promise;
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: {
+          parts: [
+            {
+              inlineData: {
+                data: base64Data,
+                mimeType: file.type
+              }
+            },
+            {
+              text: "Remove the background from this image. Return only the subject with a transparent background. The output must be an image."
+            }
+          ]
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to remove background');
+      let foundImage = false;
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) {
+          setProcessedImage(`data:image/png;base64,${part.inlineData.data}`);
+          foundImage = true;
+          break;
+        }
       }
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      setProcessedImage(url);
+      
+      if (!foundImage) {
+        throw new Error("AI did not return an image. It might have returned text instead.");
+      }
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.');
       console.error(err);
