@@ -70,8 +70,8 @@ export default function ChatAI() {
   };
 
   const generateImage = async (prompt: string) => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT;
-    if (!apiKey) throw new Error('Gemini API Key is missing');
+    const apiKey = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY_CHAT || import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) throw new Error('Gemini API Key is missing. Please ensure the Gemini API is enabled in your project settings.');
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
@@ -108,8 +108,8 @@ export default function ChatAI() {
     setIsLoading(true);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT;
-      if (!apiKey) throw new Error('Gemini API Key is missing');
+      const apiKey = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY_CHAT || import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error('Gemini API Key is missing. Please ensure the Gemini API is enabled in your project settings.');
       const ai = new GoogleGenAI({ apiKey });
       
       if (currentMode === 'image') {
@@ -264,8 +264,8 @@ export default function ChatAI() {
     };
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT;
-      if (!apiKey) throw new Error('Gemini API Key is missing');
+      const apiKey = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY_CHAT || import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error('Gemini API Key is missing. Please ensure the Gemini API is enabled in your project settings.');
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",

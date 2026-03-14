@@ -52,11 +52,19 @@ export default function BGRemover() {
         const url = URL.createObjectURL(blob);
         setProcessedImage(url);
       } else {
-        const data = await response.json().catch(() => ({}));
-        if (data.imageUrl) {
-          setProcessedImage(data.imageUrl);
-        } else {
-          throw new Error('Unexpected response from server');
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          if (data.imageUrl) {
+            setProcessedImage(data.imageUrl);
+          } else if (data.error) {
+            throw new Error(data.error);
+          } else {
+            throw new Error('Unexpected JSON response from server');
+          }
+        } catch (e: any) {
+          if (e.message.includes('Unexpected JSON')) throw e;
+          throw new Error(`Server returned non-image response: ${text.substring(0, 100)}...`);
         }
       }
     } catch (err: any) {
