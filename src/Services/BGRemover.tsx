@@ -34,6 +34,7 @@ export default function BGRemover() {
     formData.append('image', file);
 
     try {
+      console.log('Attempting Photoroom background removal...');
       const response = await fetch('/api/remove-bg', {
         method: 'POST',
         body: formData,
@@ -41,10 +42,11 @@ export default function BGRemover() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.warn('Photoroom API failed, attempting Gemini fallback:', errorData.error);
+        const serverError = errorData.error || response.statusText;
+        console.warn('Photoroom API failed, attempting Gemini fallback. Error:', serverError);
         
         // Attempt Gemini Fallback
-        await attemptGeminiFallback(file);
+        await attemptGeminiFallback(file, `Photoroom failed: ${serverError}`);
         return;
       }
 
@@ -54,7 +56,7 @@ export default function BGRemover() {
     } catch (err: any) {
       console.error('Photoroom error, trying Gemini fallback:', err);
       try {
-        await attemptGeminiFallback(file);
+        await attemptGeminiFallback(file, err.message);
       } catch (fallbackErr: any) {
         setError(fallbackErr.message || 'Something went wrong. Please try again.');
       }
@@ -63,16 +65,13 @@ export default function BGRemover() {
     }
   }, []);
 
-  const attemptGeminiFallback = async (file: File) => {
-    // Hardcoded fallback key for Gemini (using your chat key as backup)
-    const fallbackGeminiKey = "YOUR_GEMINI_API_KEY_HERE"; // I will use the one from the environment if available
+  const attemptGeminiFallback = async (file: File, originalError: string) => {
+    console.log('Starting Gemini fallback...');
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT || 
-                   import.meta.env.VITE_GEMINI_API_KEY_WATERMARK || 
-                   process.env.GEMINI_API_KEY_CHAT; // Attempting various sources
+                   import.meta.env.VITE_GEMINI_API_KEY_WATERMARK;
     
-    // If still no key, we'll have to show the error, but I'll try to make it more descriptive
     if (!apiKey) {
-      throw new Error("Background removal failed. Please add your Gemini API Key to Vercel environment variables (VITE_GEMINI_API_KEY_CHAT).");
+      throw new Error(`Background removal failed (${originalError}). Also, Gemini API Key is missing in Vercel (VITE_GEMINI_API_KEY_CHAT).`);
     }
     
     const ai = new GoogleGenAI({ apiKey });

@@ -29,8 +29,8 @@ async function startServer() {
       const apiKey = process.env.PHOTOROOM_API_KEY || "sk_pr_backgroundremover_82da5717efd8ce6e7080e40b68a4616dfb293f00";
       
       if (!apiKey) {
-        console.error("PHOTOROOM_API_KEY is not set");
-        return res.status(500).json({ error: "Background removal service is not configured." });
+        console.error("PHOTOROOM_API_KEY is not set in environment variables");
+        return res.status(500).json({ error: "Background removal service is not configured. Please check Vercel environment variables." });
       }
 
       const fileBuffer = fs.readFileSync(req.file.path);
