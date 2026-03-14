@@ -10,17 +10,13 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  const upload = multer({ dest: "/tmp/uploads/" });
-
-  // Ensure uploads directory exists
-  if (!fs.existsSync("/tmp/uploads")) {
-    fs.mkdirSync("/tmp/uploads", { recursive: true });
-  }
+  const storage = multer.memoryStorage();
+  const upload = multer({ storage: storage });
 
   // API routes
   app.post("/api/remove-bg", upload.single("image"), async (req, res) => {
     try {
-      console.log("--- New Background Removal Request ---");
+      console.log("--- New Background Removal Request (Memory Storage) ---");
       if (!req.file) {
         console.error("No file received in the request");
         return res.status(400).json({ error: "No image uploaded. Please select an image." });
@@ -29,28 +25,23 @@ async function startServer() {
       console.log("File received:", {
         originalname: req.file.originalname,
         mimetype: req.file.mimetype,
-        size: req.file.size,
-        path: req.file.path
+        size: req.file.size
       });
 
       // Use environment variable if available, otherwise use the provided fallback key
       const apiKey = process.env.PHOTOROOM_API_KEY || "sk_pr_backgroundremover_82da5717efd8ce6e7080e40b68a4616dfb293f00";
       
       if (!apiKey || apiKey === "YOUR_PHOTOROOM_API_KEY_HERE") {
-        console.error("PHOTOROOM_API_KEY is missing or invalid");
-        return res.status(500).json({ error: "Photoroom API key is not configured. Please add PHOTOROOM_API_KEY to Vercel environment variables." });
+        return res.status(500).json({ error: "Photoroom API key is missing. Please add PHOTOROOM_API_KEY to your environment variables." });
       }
 
-      console.log("Reading file from disk...");
-      const fileBuffer = fs.readFileSync(req.file.path);
-      
       const formData = new FormData();
-      formData.append("image_file", fileBuffer, {
+      formData.append("image_file", req.file.buffer, {
         filename: req.file.originalname,
         contentType: req.file.mimetype,
       });
 
-      console.log("Sending request to Photoroom API using Axios...");
+      console.log("Sending request to Photoroom API...");
       
       const response = await axios.post("https://sdk.photoroom.com/v1/segment", formData, {
         headers: {
@@ -58,36 +49,35 @@ async function startServer() {
           ...formData.getHeaders(),
         },
         responseType: "arraybuffer",
+        timeout: 30000, // 30 seconds timeout
       });
 
       console.log("Photoroom API success, status:", response.status);
       
-      // Cleanup
-      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-      
-      console.log("Sending processed image back to client");
       res.set("Content-Type", "image/png");
       res.send(Buffer.from(response.data));
     } catch (error: any) {
-      console.error("CRITICAL SERVER ERROR:", error.response?.data ? error.response.data.toString() : error.message);
-      
-      if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
+      console.error("SERVER ERROR DETAILS:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data ? error.response.data.toString() : "No data"
+      });
 
       const status = error.response?.status || 500;
       let errorMessage = error.message;
 
       if (error.response?.data) {
         try {
-          const errorData = JSON.parse(error.response.data.toString());
-          errorMessage = errorData.message || errorData.error || errorMessage;
+          // If the error data is a buffer (due to responseType: arraybuffer), convert to string
+          const errorString = error.response.data.toString();
+          const errorData = JSON.parse(errorString);
+          errorMessage = errorData.message || errorData.error || errorString;
         } catch (e) {
           errorMessage = error.response.data.toString() || errorMessage;
         }
       }
 
-      res.status(status).json({ error: `Photoroom Error: ${errorMessage}` });
+      res.status(status).json({ error: `Photoroom API Error: ${errorMessage}` });
     }
   });
 
