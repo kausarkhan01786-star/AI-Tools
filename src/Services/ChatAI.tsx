@@ -70,7 +70,9 @@ export default function ChatAI() {
   };
 
   const generateImage = async (prompt: string) => {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_CHAT });
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT;
+    if (!apiKey) throw new Error('Gemini API Key is missing');
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: [{ parts: [{ text: prompt }] }],
@@ -106,7 +108,9 @@ export default function ChatAI() {
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_CHAT });
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT;
+      if (!apiKey) throw new Error('Gemini API Key is missing');
+      const ai = new GoogleGenAI({ apiKey });
       
       if (currentMode === 'image') {
         const generatedImageUrl = await generateImage(currentInput);
@@ -154,12 +158,18 @@ export default function ChatAI() {
           speakResponse(text, assistantMessage.id, isLiveActive);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      let errorMessage = "Sorry, I encountered an error. Please check your API key or try again later.";
+      
+      if (error.message?.includes('429') || error.message?.includes('Quota exceeded') || error.message?.includes('RESOURCE_EXHAUSTED')) {
+        errorMessage = "Gemini API limit reached. Please wait 10-20 seconds and try again. (Free tier has limits)";
+      }
+
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "Sorry, I encountered an error. Please check your API key or try again later."
+        content: errorMessage
       }]);
     } finally {
       setIsLoading(false);
@@ -254,7 +264,9 @@ export default function ChatAI() {
     };
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_CHAT });
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT;
+      if (!apiKey) throw new Error('Gemini API Key is missing');
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
         contents: [{ parts: [{ text: cleanedText }] }],

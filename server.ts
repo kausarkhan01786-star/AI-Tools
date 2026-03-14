@@ -25,9 +25,13 @@ async function startServer() {
         return res.status(400).json({ error: "No image uploaded" });
       }
 
+      // Use environment variable if available, otherwise use the provided fallback key
       const apiKey = process.env.PHOTOROOM_API_KEY || "sk_pr_backgroundremover_82da5717efd8ce6e7080e40b68a4616dfb293f00";
       
-      console.log("Using API Key (first 5 chars):", apiKey.substring(0, 5));
+      if (!apiKey) {
+        console.error("PHOTOROOM_API_KEY is not set");
+        return res.status(500).json({ error: "Background removal service is not configured." });
+      }
 
       const fileBuffer = fs.readFileSync(req.file.path);
       const formData = new FormData();

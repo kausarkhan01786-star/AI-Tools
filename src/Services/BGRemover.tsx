@@ -30,56 +30,86 @@ export default function BGRemover() {
     reader.readAsDataURL(file);
 
     setIsProcessing(true);
-    
+    const formData = new FormData();
+    formData.append('image', file);
+
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_CHAT || process.env.GEMINI_API_KEY_WATERMARK });
-      
-      // Convert file to base64
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      
-      const base64Data = await base64Promise;
-      
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-          parts: [
-            {
-              inlineData: {
-                data: base64Data,
-                mimeType: file.type
-              }
-            },
-            {
-              text: "Remove the background from this image. Return only the subject with a transparent background. The output must be an image."
-            }
-          ]
-        }
+      const response = await fetch('/api/remove-bg', {
+        method: 'POST',
+        body: formData,
       });
 
-      let foundImage = false;
-      for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          setProcessedImage(`data:image/png;base64,${part.inlineData.data}`);
-          foundImage = true;
-          break;
-        }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.warn('Photoroom API failed, attempting Gemini fallback:', errorData.error);
+        
+        // Attempt Gemini Fallback
+        await attemptGeminiFallback(file);
+        return;
       }
-      
-      if (!foundImage) {
-        throw new Error("AI did not return an image. It might have returned text instead.");
-      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      setProcessedImage(url);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
-      console.error(err);
+      console.error('Photoroom error, trying Gemini fallback:', err);
+      try {
+        await attemptGeminiFallback(file);
+      } catch (fallbackErr: any) {
+        setError(fallbackErr.message || 'Something went wrong. Please try again.');
+      }
     } finally {
       setIsProcessing(false);
     }
   }, []);
+
+  const attemptGeminiFallback = async (file: File) => {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT || import.meta.env.VITE_GEMINI_API_KEY_WATERMARK;
+    if (!apiKey) {
+      throw new Error("Background removal service failed and no Gemini fallback is configured.");
+    }
+    
+    const ai = new GoogleGenAI({ apiKey });
+    
+    const base64Promise = new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    
+    const base64Data = await base64Promise;
+    
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              data: base64Data,
+              mimeType: file.type
+            }
+          },
+          {
+            text: "Remove the background from this image. Return only the subject with a transparent background. The output must be an image."
+          }
+        ]
+      }
+    });
+
+    let foundImage = false;
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData) {
+        setProcessedImage(`data:image/png;base64,${part.inlineData.data}`);
+        foundImage = true;
+        break;
+      }
+    }
+    
+    if (!foundImage) {
+      throw new Error("Both Photoroom and Gemini failed to process the image.");
+    }
+  };
 
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();

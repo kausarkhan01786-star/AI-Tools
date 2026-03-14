@@ -38,7 +38,9 @@ export default function WatermarkRemover() {
     setProgress(10);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_WATERMARK });
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY_WATERMARK || import.meta.env.VITE_GEMINI_API_KEY_CHAT;
+      if (!apiKey) throw new Error('Gemini API Key is missing');
+      const ai = new GoogleGenAI({ apiKey });
       
       // Detect mime type from base64
       const mimeType = selectedImage.split(';')[0].split(':')[1] || 'image/jpeg';
@@ -79,9 +81,15 @@ export default function WatermarkRemover() {
       }
       
       setProgress(100);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error removing watermark:', error);
-      alert('Failed to process image. This could be due to an invalid API key or a safety filter. Please try again with a different image.');
+      let errorMessage = 'Failed to process image. This could be due to an invalid API key or a safety filter. Please try again with a different image.';
+      
+      if (error.message?.includes('429') || error.message?.includes('Quota exceeded') || error.message?.includes('RESOURCE_EXHAUSTED')) {
+        errorMessage = 'Gemini API limit reached. Please wait 10-20 seconds and try again. (Free tier has limits)';
+      }
+      
+      alert(errorMessage);
     } finally {
       setTimeout(() => {
         setIsProcessing(false);
