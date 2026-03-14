@@ -50,7 +50,7 @@ app.post("/api/remove-bg", upload.single("image"), async (req, res) => {
         ...formData.getHeaders(),
       },
       responseType: "arraybuffer",
-      timeout: 30000, // 30 seconds timeout
+      timeout: 30000,
     });
 
     console.log("Photoroom API success, status:", response.status);
@@ -58,26 +58,25 @@ app.post("/api/remove-bg", upload.single("image"), async (req, res) => {
     res.set("Content-Type", "image/png");
     res.send(Buffer.from(response.data));
   } catch (error: any) {
-    console.error("SERVER ERROR DETAILS:", {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data ? error.response.data.toString() : "No data"
-    });
-
-    const status = error.response?.status || 500;
     let errorMessage = error.message;
+    let statusCode = 500;
 
-    if (error.response?.data) {
-      try {
-        const errorString = error.response.data.toString();
-        const errorData = JSON.parse(errorString);
-        errorMessage = errorData.message || errorData.error || errorString;
-      } catch (e) {
-        errorMessage = error.response.data.toString() || errorMessage;
+    if (error.response) {
+      statusCode = error.response.status;
+      if (error.response.data instanceof Buffer || error.response.data instanceof ArrayBuffer) {
+        try {
+          const decoded = JSON.parse(Buffer.from(error.response.data).toString());
+          errorMessage = decoded.message || decoded.error || JSON.stringify(decoded);
+        } catch (e) {
+          errorMessage = Buffer.from(error.response.data).toString();
+        }
+      } else {
+        errorMessage = JSON.stringify(error.response.data);
       }
     }
 
-    res.status(status).json({ error: `Photoroom API Error: ${errorMessage}` });
+    console.error("FINAL ERROR SENT TO CLIENT:", { statusCode, errorMessage });
+    res.status(statusCode).json({ error: errorMessage });
   }
 });
 
