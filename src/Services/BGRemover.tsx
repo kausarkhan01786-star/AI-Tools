@@ -42,9 +42,15 @@ export default function BGRemover() {
       const contentType = response.headers.get('content-type');
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const serverError = errorData.error || response.statusText || 'Server error';
-        throw new Error(serverError);
+        const errorText = await response.text();
+        let errorMessage = 'Server error';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorText;
+        } catch (e) {
+          errorMessage = errorText || response.statusText || 'Server error';
+        }
+        throw new Error(errorMessage);
       }
 
       if (contentType && contentType.includes('image')) {

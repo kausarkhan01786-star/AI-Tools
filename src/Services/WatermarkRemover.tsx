@@ -38,12 +38,9 @@ export default function WatermarkRemover() {
     setProgress(10);
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY || 
-                     import.meta.env.VITE_GEMINI_API_KEY_WATERMARK || 
-                     import.meta.env.VITE_GEMINI_API_KEY_CHAT || 
-                     import.meta.env.VITE_GEMINI_API_KEY;
+      // Hardcoded key as requested by user for immediate fix
+      const apiKey = "AIzaSyC5_cmDw6zfbmaR0VsNy8mLUB0aZKgQoWI";
       
-      if (!apiKey) throw new Error('Gemini API Key is missing. Please ensure the Gemini API is enabled in your project settings.');
       const ai = new GoogleGenAI({ apiKey });
       
       // Detect mime type from base64

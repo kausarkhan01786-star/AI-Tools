@@ -75,8 +75,16 @@ app.post("/api/remove-bg", upload.single("image"), async (req, res) => {
       }
     }
 
-    console.error("FINAL ERROR SENT TO CLIENT:", { statusCode, errorMessage });
-    res.status(statusCode).json({ error: errorMessage });
+    console.error("SERVER ERROR:", { 
+      statusCode, 
+      errorMessage, 
+      photoroomData: error.response?.data ? Buffer.from(error.response.data).toString() : "No data"
+    });
+    
+    res.status(statusCode).json({ 
+      error: errorMessage,
+      details: error.response?.data ? Buffer.from(error.response.data).toString() : undefined
+    });
   }
 });
 
