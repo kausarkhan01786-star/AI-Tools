@@ -70,7 +70,7 @@ export default function ChatAI() {
   };
 
   const generateImage = async (prompt: string) => {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_CHAT });
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: [{ parts: [{ text: prompt }] }],
@@ -106,7 +106,7 @@ export default function ChatAI() {
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_CHAT });
       
       if (currentMode === 'image') {
         const generatedImageUrl = await generateImage(currentInput);
@@ -254,7 +254,7 @@ export default function ChatAI() {
     };
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_CHAT });
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
         contents: [{ parts: [{ text: cleanedText }] }],

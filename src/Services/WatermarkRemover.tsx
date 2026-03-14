@@ -38,7 +38,10 @@ export default function WatermarkRemover() {
     setProgress(10);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_WATERMARK });
+      
+      // Detect mime type from base64
+      const mimeType = selectedImage.split(';')[0].split(':')[1] || 'image/jpeg';
       const base64Data = selectedImage.split(',')[1];
       
       setProgress(30);
@@ -50,11 +53,11 @@ export default function WatermarkRemover() {
             {
               inlineData: {
                 data: base64Data,
-                mimeType: "image/jpeg"
+                mimeType: mimeType
               }
             },
             {
-              text: "Remove all watermarks, logos, and text from this image. Fill the areas naturally. IMPORTANT: The output image MUST be exactly 1280x1080 pixels in resolution."
+              text: "Act as a professional photo editor. Remove all watermarks, text overlays, logos, and stamps from this image. Reconstruct the missing parts of the background seamlessly to match the surrounding textures and colors. The output must be only the cleaned image."
             }
           ]
         }
@@ -62,17 +65,23 @@ export default function WatermarkRemover() {
 
       setProgress(70);
 
+      let foundImage = false;
       for (const part of response.candidates?.[0]?.content?.parts || []) {
         if (part.inlineData) {
           setProcessedImage(`data:image/png;base64,${part.inlineData.data}`);
+          foundImage = true;
           break;
         }
+      }
+      
+      if (!foundImage) {
+        throw new Error("AI did not return an image. It might have returned text instead.");
       }
       
       setProgress(100);
     } catch (error) {
       console.error('Error removing watermark:', error);
-      alert('Failed to process image. Please try again.');
+      alert('Failed to process image. This could be due to an invalid API key or a safety filter. Please try again with a different image.');
     } finally {
       setTimeout(() => {
         setIsProcessing(false);
