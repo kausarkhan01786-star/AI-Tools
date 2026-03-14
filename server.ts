@@ -11,6 +11,10 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // API routes
+app.get("/api/test", (req, res) => {
+  res.json({ message: "API is working!", env: process.env.NODE_ENV });
+});
+
 app.post("/api/remove-bg", upload.single("image"), async (req, res) => {
   try {
     console.log("--- New Background Removal Request (Memory Storage) ---");
