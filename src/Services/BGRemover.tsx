@@ -64,9 +64,15 @@ export default function BGRemover() {
   }, []);
 
   const attemptGeminiFallback = async (file: File) => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT || import.meta.env.VITE_GEMINI_API_KEY_WATERMARK;
+    // Hardcoded fallback key for Gemini (using your chat key as backup)
+    const fallbackGeminiKey = "YOUR_GEMINI_API_KEY_HERE"; // I will use the one from the environment if available
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT || 
+                   import.meta.env.VITE_GEMINI_API_KEY_WATERMARK || 
+                   process.env.GEMINI_API_KEY_CHAT; // Attempting various sources
+    
+    // If still no key, we'll have to show the error, but I'll try to make it more descriptive
     if (!apiKey) {
-      throw new Error("Background removal service failed and no Gemini fallback is configured.");
+      throw new Error("Background removal failed. Please add your Gemini API Key to Vercel environment variables (VITE_GEMINI_API_KEY_CHAT).");
     }
     
     const ai = new GoogleGenAI({ apiKey });
