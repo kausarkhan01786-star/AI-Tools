@@ -8,7 +8,6 @@ import {
   Loader2, 
   Sparkles
 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 
 export default function BGRemover() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -43,78 +42,19 @@ export default function BGRemover() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const serverError = errorData.error || response.statusText;
-        console.warn('Photoroom API failed, attempting Gemini fallback. Error:', serverError);
-        
-        // Attempt Gemini Fallback
-        await attemptGeminiFallback(file, `Photoroom failed: ${serverError}`);
-        return;
+        throw new Error(serverError);
       }
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setProcessedImage(url);
     } catch (err: any) {
-      console.error('Photoroom error, trying Gemini fallback:', err);
-      try {
-        await attemptGeminiFallback(file, err.message);
-      } catch (fallbackErr: any) {
-        setError(fallbackErr.message || 'Something went wrong. Please try again.');
-      }
+      console.error('Background removal error:', err);
+      setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setIsProcessing(false);
     }
   }, []);
-
-  const attemptGeminiFallback = async (file: File, originalError: string) => {
-    console.log('Starting Gemini fallback...');
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT || 
-                   import.meta.env.VITE_GEMINI_API_KEY_WATERMARK;
-    
-    if (!apiKey) {
-      throw new Error(`Background removal failed (${originalError}). Also, Gemini API Key is missing in Vercel (VITE_GEMINI_API_KEY_CHAT).`);
-    }
-    
-    const ai = new GoogleGenAI({ apiKey });
-    
-    const base64Promise = new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve((reader.result as string).split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-    
-    const base64Data = await base64Promise;
-    
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: {
-        parts: [
-          {
-            inlineData: {
-              data: base64Data,
-              mimeType: file.type
-            }
-          },
-          {
-            text: "Remove the background from this image. Return only the subject with a transparent background. The output must be an image."
-          }
-        ]
-      }
-    });
-
-    let foundImage = false;
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        setProcessedImage(`data:image/png;base64,${part.inlineData.data}`);
-        foundImage = true;
-        break;
-      }
-    }
-    
-    if (!foundImage) {
-      throw new Error("Both Photoroom and Gemini failed to process the image.");
-    }
-  };
 
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
