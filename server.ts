@@ -9,11 +9,11 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  const upload = multer({ dest: "uploads/" });
+  const upload = multer({ dest: "/tmp/uploads/" });
 
   // Ensure uploads directory exists
-  if (!fs.existsSync("uploads")) {
-    fs.mkdirSync("uploads");
+  if (!fs.existsSync("/tmp/uploads")) {
+    fs.mkdirSync("/tmp/uploads", { recursive: true });
   }
 
   // API routes

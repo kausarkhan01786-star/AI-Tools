@@ -39,15 +39,26 @@ export default function BGRemover() {
         body: formData,
       });
 
+      const contentType = response.headers.get('content-type');
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const serverError = errorData.error || response.statusText;
+        const serverError = errorData.error || response.statusText || 'Server error';
         throw new Error(serverError);
       }
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      setProcessedImage(url);
+      if (contentType && contentType.includes('image')) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setProcessedImage(url);
+      } else {
+        const data = await response.json().catch(() => ({}));
+        if (data.imageUrl) {
+          setProcessedImage(data.imageUrl);
+        } else {
+          throw new Error('Unexpected response from server');
+        }
+      }
     } catch (err: any) {
       console.error('Background removal error:', err);
       setError(err.message || 'Something went wrong. Please try again.');
