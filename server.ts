@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import "dotenv/config";
 import express from "express";
 import path from "path";
@@ -6,12 +7,26 @@ import axios from "axios";
 import FormData from "form-data";
 
 const app = express();
+=======
+import express from "express";
+import { createServer as createViteServer } from "vite";
+import path from "path";
+import multer from "multer";
+import fs from "fs";
+import FormData from "form-data";
+import axios from "axios";
+
+const app = express();
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
 
 // API routes
 app.get("/api/test", (req, res) => {
   res.json({ message: "API is working!", env: process.env.NODE_ENV });
 });
 
+<<<<<<< HEAD
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
@@ -93,15 +108,92 @@ app.post("/api/watermark/remove", upload.single("image"), async (req, res) => {
     const message =
       typeof err?.message === "string" ? err.message : "Failed to remove watermark.";
     return res.status(500).json({ error: message });
+=======
+app.post("/api/remove-bg", upload.single("image"), async (req, res) => {
+  try {
+    console.log("--- New Background Removal Request (Memory Storage) ---");
+    if (!req.file) {
+      console.error("No file received in the request");
+      return res.status(400).json({ error: "No image uploaded. Please select an image." });
+    }
+
+    console.log("File received:", {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size
+    });
+
+    // Use environment variable if available, otherwise use the provided fallback key
+    const apiKey = process.env.PHOTOROOM_API_KEY || "sk_pr_backgroundremover_82da5717efd8ce6e7080e40b68a4616dfb293f00";
+    
+    if (!apiKey || apiKey === "YOUR_PHOTOROOM_API_KEY_HERE") {
+      return res.status(500).json({ error: "Photoroom API key is missing. Please add PHOTOROOM_API_KEY to your environment variables." });
+    }
+
+    const formData = new FormData();
+    formData.append("image_file", req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype,
+    });
+
+    console.log("Sending request to Photoroom API...");
+    
+    const response = await axios.post("https://sdk.photoroom.com/v1/segment", formData, {
+      headers: {
+        "x-api-key": apiKey,
+        ...formData.getHeaders(),
+      },
+      responseType: "arraybuffer",
+      timeout: 30000,
+    });
+
+    console.log("Photoroom API success, status:", response.status);
+    
+    res.set("Content-Type", "image/png");
+    res.send(Buffer.from(response.data));
+  } catch (error: any) {
+    let errorMessage = error.message;
+    let statusCode = 500;
+
+    if (error.response) {
+      statusCode = error.response.status;
+      if (error.response.data instanceof Buffer || error.response.data instanceof ArrayBuffer) {
+        try {
+          const decoded = JSON.parse(Buffer.from(error.response.data).toString());
+          errorMessage = decoded.message || decoded.error || JSON.stringify(decoded);
+        } catch (e) {
+          errorMessage = Buffer.from(error.response.data).toString();
+        }
+      } else {
+        errorMessage = JSON.stringify(error.response.data);
+      }
+    }
+
+    console.error("SERVER ERROR:", { 
+      statusCode, 
+      errorMessage, 
+      photoroomData: error.response?.data ? Buffer.from(error.response.data).toString() : "No data"
+    });
+    
+    res.status(statusCode).json({ 
+      error: errorMessage,
+      details: error.response?.data ? Buffer.from(error.response.data).toString() : undefined
+    });
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
   }
 });
 
 async function startServer() {
   const PORT = 3000;
 
+<<<<<<< HEAD
   if (process.env.NODE_ENV !== "production") {
     // Dynamic import for Vite to avoid bundling it in production
     const { createServer: createViteServer } = await import("vite");
+=======
+  // Vite middleware for development
+  if (process.env.NODE_ENV !== "production") {
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -115,7 +207,10 @@ async function startServer() {
     });
   }
 
+<<<<<<< HEAD
   // Only listen if not on Vercel
+=======
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
   if (!process.env.VERCEL) {
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on http://localhost:${PORT}`);

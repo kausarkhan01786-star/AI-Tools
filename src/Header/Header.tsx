@@ -95,7 +95,11 @@ export default function Header() {
                     <MegaMenuItem 
                       icon={<Droplets className="w-4 h-4" />} 
                       title="Watermark Remover" 
+<<<<<<< HEAD
                       description="Remove watermarks with AI"
+=======
+                      description="Clean up your images"
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
                       to="/services/watermark-remover"
                     />
                     <MegaMenuItem 

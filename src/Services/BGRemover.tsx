@@ -1,13 +1,23 @@
+<<<<<<< HEAD
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+=======
+import React, { useState, useRef, useCallback } from 'react';
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Upload, 
   Image as ImageIcon, 
   Download, 
   Trash2, 
+<<<<<<< HEAD
   Sparkles
 } from 'lucide-react';
 // Heavy background-removal runs in a Web Worker to keep UI/animations responsive.
+=======
+  Loader2, 
+  Sparkles
+} from 'lucide-react';
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
 
 export default function BGRemover() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -16,6 +26,7 @@ export default function BGRemover() {
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+<<<<<<< HEAD
   const originalUrlRef = useRef<string | null>(null);
   const processedUrlRef = useRef<string | null>(null);
   const runIdRef = useRef(0);
@@ -28,6 +39,8 @@ export default function BGRemover() {
       if (processedUrlRef.current) URL.revokeObjectURL(processedUrlRef.current);
     };
   }, []);
+=======
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
 
   const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -35,6 +48,7 @@ export default function BGRemover() {
       return;
     }
 
+<<<<<<< HEAD
     const runId = ++runIdRef.current;
     setError(null);
     setIsProcessing(true);
@@ -113,6 +127,63 @@ export default function BGRemover() {
     } finally {
       if (runId === runIdRef.current) setIsProcessing(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+=======
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = (e) => setOriginalImage(e.target?.result as string);
+    reader.readAsDataURL(file);
+
+    setIsProcessing(true);
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      console.log('Attempting Photoroom background removal...');
+      const response = await fetch('/api/remove-bg', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const contentType = response.headers.get('content-type');
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = 'Server error';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorText;
+        } catch (e) {
+          errorMessage = errorText || response.statusText || 'Server error';
+        }
+        throw new Error(errorMessage);
+      }
+
+      if (contentType && contentType.includes('image')) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setProcessedImage(url);
+      } else {
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          if (data.imageUrl) {
+            setProcessedImage(data.imageUrl);
+          } else if (data.error) {
+            throw new Error(data.error);
+          } else {
+            throw new Error('Unexpected JSON response from server');
+          }
+        } catch (e: any) {
+          if (e.message.includes('Unexpected JSON')) throw e;
+          throw new Error(`Server returned non-image response: ${text.substring(0, 100)}...`);
+        }
+      }
+    } catch (err: any) {
+      console.error('Background removal error:', err);
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setIsProcessing(false);
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
     }
   }, []);
 
@@ -140,6 +211,7 @@ export default function BGRemover() {
   };
 
   const reset = () => {
+<<<<<<< HEAD
     runIdRef.current++;
     if (workerRef.current) {
       workerRef.current.terminate();
@@ -154,6 +226,11 @@ export default function BGRemover() {
     setError(null);
     setIsProcessing(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
+=======
+    setOriginalImage(null);
+    setProcessedImage(null);
+    setError(null);
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
   };
 
   const downloadImage = () => {
@@ -168,6 +245,7 @@ export default function BGRemover() {
 
   return (
     <div className="pt-32 pb-24 px-6">
+<<<<<<< HEAD
       <input 
         type="file" 
         ref={fileInputRef} 
@@ -175,6 +253,8 @@ export default function BGRemover() {
         className="hidden" 
         accept="image/*"
       />
+=======
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
       <header className="pb-8 flex flex-col items-center">
         <motion.h1 
           initial={{ opacity: 0, y: -20 }}
@@ -196,7 +276,11 @@ export default function BGRemover() {
         </div>
 
         <div className="w-full max-w-md">
+<<<<<<< HEAD
           <AnimatePresence>
+=======
+          <AnimatePresence mode="wait">
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
             {!originalImage ? (
               <motion.div
                 key="upload"
@@ -215,6 +299,17 @@ export default function BGRemover() {
                 `}
                 onClick={() => fileInputRef.current?.click()}
               >
+<<<<<<< HEAD
+=======
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={onFileChange} 
+                  className="hidden" 
+                  accept="image/*"
+                />
+                
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
                 <div className="w-20 h-20 bg-blue-100 rounded-3xl flex items-center justify-center mb-6 text-blue-600 shadow-inner">
                   <Upload className="w-10 h-10" />
                 </div>
@@ -238,6 +333,7 @@ export default function BGRemover() {
                 className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-500/10 overflow-hidden border border-[#E5E5EA]"
               >
                 <div className="relative aspect-[4/5] bg-[#F2F2F7] group">
+<<<<<<< HEAD
                   {/* Show original image during processing, processed image after */}
                   {isProcessing ? (
                     <div className="relative w-full h-full">
@@ -295,10 +391,31 @@ export default function BGRemover() {
                   {isProcessing && (
                     <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
                       <p className="px-4 py-2 bg-blue-600 text-white text-sm font-bold tracking-widest uppercase rounded-full shadow-lg shadow-blue-500/50 animate-pulse">Scanning & Processing...</p>
+=======
+                  <img 
+                    src={processedImage || originalImage} 
+                    alt="Preview" 
+                    className={`w-full h-full object-contain transition-all duration-700 ${isProcessing ? 'blur-md grayscale' : ''}`}
+                  />
+                  
+                  {isProcessing && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/40 backdrop-blur-sm">
+                      <div className="relative">
+                        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+                        <motion.div 
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1.2, opacity: 1 }}
+                          transition={{ repeat: Infinity, duration: 1.5, repeatType: "reverse" }}
+                          className="absolute inset-0 bg-blue-400/20 rounded-full blur-xl"
+                        />
+                      </div>
+                      <p className="mt-4 text-sm font-bold text-blue-600 tracking-widest uppercase">Removing Background...</p>
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
                     </div>
                   )}
 
                   <div className="absolute top-4 right-4 flex gap-2">
+<<<<<<< HEAD
                     <button
                       onClick={() => fileInputRef.current?.click()}
                       className="p-3 bg-white/90 backdrop-blur-md rounded-2xl text-blue-600 shadow-lg hover:bg-blue-50 transition-colors"
@@ -307,6 +424,8 @@ export default function BGRemover() {
                     >
                       <Upload className="w-5 h-5" />
                     </button>
+=======
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
                     <button 
                       onClick={reset}
                       className="p-3 bg-white/90 backdrop-blur-md rounded-2xl text-red-500 shadow-lg hover:bg-red-50 transition-colors"

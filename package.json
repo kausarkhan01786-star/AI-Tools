@@ -12,7 +12,10 @@
   },
   "dependencies": {
     "@google/genai": "^1.45.0",
+<<<<<<< HEAD
     "@imgly/background-removal": "^1.7.0",
+=======
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
     "@tailwindcss/vite": "^4.1.14",
     "@types/multer": "^2.1.0",
     "@vitejs/plugin-react": "^5.0.4",

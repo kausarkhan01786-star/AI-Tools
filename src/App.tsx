@@ -5,7 +5,11 @@ import Home from './Home/Home';
 import Login from './Auth/Login';
 import Register from './Auth/Register';
 import BGRemover from './Services/BGRemover';
+<<<<<<< HEAD
 import WatermarkRemoverPro from './Services/WatermarkRemoverPro';
+=======
+import WatermarkRemover from './Services/WatermarkRemover';
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
 import ChatAI from './Services/ChatAI';
 import About from './About/About';
 import Contact from './Contact/Contact';
@@ -40,7 +44,11 @@ export default function App() {
               path="/services/watermark-remover" 
               element={
                 <ProtectedRoute>
+<<<<<<< HEAD
                   <WatermarkRemoverPro />
+=======
+                  <WatermarkRemover />
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
                 </ProtectedRoute>
               } 
             />

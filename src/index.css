@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap');
 @import "tailwindcss";
+=======
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap');
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
 
 @theme {
   --font-montserrat: "Montserrat", sans-serif;

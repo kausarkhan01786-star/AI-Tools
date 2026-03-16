@@ -70,7 +70,11 @@ export default function ChatAI() {
   };
 
   const generateImage = async (prompt: string) => {
+<<<<<<< HEAD
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT;
+=======
+    const apiKey = "AIzaSyAWJ5_0-jxGow78jxOCn3km1EsX65aewdY";
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
@@ -107,10 +111,14 @@ export default function ChatAI() {
     setIsLoading(true);
 
     try {
+<<<<<<< HEAD
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT;
       if (!apiKey) {
         throw new Error("API key not configured. Please set VITE_GEMINI_API_KEY_CHAT in your .env file.");
       }
+=======
+      const apiKey = "AIzaSyAWJ5_0-jxGow78jxOCn3km1EsX65aewdY";
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
       const ai = new GoogleGenAI({ apiKey });
       
       if (currentMode === 'image') {
@@ -160,21 +168,33 @@ export default function ChatAI() {
         }
       }
     } catch (error: any) {
+<<<<<<< HEAD
       console.error("Gemini Error:", error);
       let errorMessage = error.message || "Sorry, I encountered an error. Please check your API key or try again later.";
+=======
+      console.error(error);
+      let errorMessage = "Sorry, I encountered an error. Please check your API key or try again later.";
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
       
       if (error.message?.includes('429') || error.message?.includes('Quota exceeded') || error.message?.includes('RESOURCE_EXHAUSTED')) {
         errorMessage = "Gemini API limit reached. Please wait 10-20 seconds and try again. (Free tier has limits)";
       }
+<<<<<<< HEAD
       
       if (error.message?.includes('API key not valid')) {
         errorMessage = "Invalid API Key. Please check the hardcoded key in the source code.";
       }
+=======
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
 
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
+<<<<<<< HEAD
         content: `Error: ${errorMessage}`
+=======
+        content: errorMessage
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
       }]);
     } finally {
       setIsLoading(false);
@@ -229,7 +249,10 @@ export default function ChatAI() {
   const speakResponse = async (text: string, messageId: string, continueLive: boolean = false) => {
     if (isSpeaking === messageId) {
       setIsSpeaking(null);
+<<<<<<< HEAD
       if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+=======
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
       return;
     }
 
@@ -240,7 +263,11 @@ export default function ChatAI() {
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove markdown links
       .replace(/[*_#`~]/g, '') // Remove markdown formatting
       .replace(/```[\s\S]*?```/g, 'code block') // Replace code blocks
+<<<<<<< HEAD
       .substring(0, 1000)
+=======
+      .substring(0, 800)
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
       .trim();
 
     if (!cleanedText) cleanedText = "I have a response for you.";
@@ -248,10 +275,18 @@ export default function ChatAI() {
     const fallbackToBrowser = () => {
       console.log("Using Browser TTS Fallback");
       window.speechSynthesis.cancel();
+<<<<<<< HEAD
+=======
+      window.speechSynthesis.resume(); // Fix for some browsers getting stuck
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
       
       const utterance = new SpeechSynthesisUtterance(cleanedText);
       utterance.lang = 'en-US';
       utterance.rate = 1.0;
+<<<<<<< HEAD
+=======
+      utterance.pitch = 1.0;
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
       
       utterance.onend = () => {
         setIsSpeaking(null);
@@ -268,10 +303,14 @@ export default function ChatAI() {
     };
 
     try {
+<<<<<<< HEAD
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY_CHAT;
       if (!apiKey) {
         throw new Error("API key not configured for TTS.");
       }
+=======
+      const apiKey = "AIzaSyAWJ5_0-jxGow78jxOCn3km1EsX65aewdY";
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
@@ -280,7 +319,11 @@ export default function ChatAI() {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
             voiceConfig: {
+<<<<<<< HEAD
               prebuiltVoiceConfig: { voiceName: 'Zephyr' }, 
+=======
+              prebuiltVoiceConfig: { voiceName: 'Zephyr' }, // Try Zephyr instead of Kore
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
             },
           },
         },
@@ -288,6 +331,7 @@ export default function ChatAI() {
 
       const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (base64Audio) {
+<<<<<<< HEAD
         // Play Raw PCM 24000Hz Audio
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         const binaryString = window.atob(base64Audio);
@@ -313,12 +357,34 @@ export default function ChatAI() {
         source.onended = () => {
           setIsSpeaking(null);
           audioContext.close();
+=======
+        // Try to play as MPEG first, then fallback
+        const audio = new Audio(`data:audio/mpeg;base64,${base64Audio}`);
+        
+        audio.onended = () => {
+          setIsSpeaking(null);
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
           if (continueLive && isLiveMode) {
             setTimeout(() => startListening(true), 500);
           }
         };
 
+<<<<<<< HEAD
         source.start();
+=======
+        audio.onerror = (e) => {
+          console.warn("AI Audio playback failed, falling back to browser TTS", e);
+          fallbackToBrowser();
+        };
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.warn("Audio play interrupted or failed:", error);
+            fallbackToBrowser();
+          });
+        }
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
       } else {
         fallbackToBrowser();
       }
@@ -338,6 +404,7 @@ export default function ChatAI() {
   }, [messages, autoSpeak]);
 
   return (
+<<<<<<< HEAD
     <div className="pt-20 md:pt-24 h-screen flex flex-col bg-[#F2F2F7] dark:bg-[#1C1C1E] transition-colors duration-300">
       {/* Header */}
       <div className="bg-white dark:bg-[#2C2C2E] border-b border-[#E5E5EA] dark:border-[#3A3A3C] shadow-sm">
@@ -351,23 +418,48 @@ export default function ChatAI() {
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                 <span className="text-[10px] font-bold text-[#8E8E8E] uppercase tracking-widest hidden sm:inline">Online & Ready</span>
+=======
+    <div className="pt-24 h-screen flex flex-col bg-[#F2F2F7] dark:bg-[#1C1C1E] transition-colors duration-300">
+      {/* Header */}
+      <div className="bg-white dark:bg-[#2C2C2E] border-b border-[#E5E5EA] dark:border-[#3A3A3C] shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+              <Bot className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="font-bold dark:text-white">AI-TOOLS Bot</h1>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-[10px] font-bold text-[#8E8E8E] uppercase tracking-widest">Online & Ready</span>
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
               </div>
             </div>
           </div>
           
+<<<<<<< HEAD
           <div className="flex items-center gap-2 md:gap-4">
+=======
+          <div className="flex items-center gap-4">
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
             <button 
               onClick={() => setAutoSpeak(!autoSpeak)}
               className={`p-2 rounded-xl transition-all flex items-center gap-2 ${autoSpeak ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' : 'text-[#8E8E93]'}`}
               title={autoSpeak ? "Auto-speak ON" : "Auto-speak OFF"}
             >
+<<<<<<< HEAD
               {autoSpeak ? <Volume2 className="w-4 h-4 md:w-5 md:h-5" /> : <VolumeX className="w-4 h-4 md:w-5 md:h-5" />}
               <span className="text-[10px] font-bold uppercase hidden md:inline">Voice</span>
+=======
+              {autoSpeak ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              <span className="text-[10px] font-bold uppercase hidden sm:inline">Voice</span>
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
             </button>
 
             <div className="flex bg-[#F2F2F7] dark:bg-[#3A3A3C] p-1 rounded-xl">
               <button 
                 onClick={() => setMode('chat')}
+<<<<<<< HEAD
                 className={`px-2 md:px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${mode === 'chat' ? 'bg-white dark:bg-[#2C2C2E] shadow-sm text-blue-600' : 'text-[#8E8E93]'}`}
               >
                 <MessageSquare className="w-3.5 h-3.5" />
@@ -379,6 +471,19 @@ export default function ChatAI() {
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Generate</span>
+=======
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${mode === 'chat' ? 'bg-white dark:bg-[#2C2C2E] shadow-sm text-blue-600' : 'text-[#8E8E93]'}`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Chat
+              </button>
+              <button 
+                onClick={() => setMode('image')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${mode === 'image' ? 'bg-white dark:bg-[#2C2C2E] shadow-sm text-purple-600' : 'text-[#8E8E93]'}`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Generate
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
               </button>
             </div>
           </div>
@@ -387,7 +492,11 @@ export default function ChatAI() {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
+<<<<<<< HEAD
         <div className="max-w-7xl mx-auto p-3 md:p-6 space-y-4 md:space-y-6">
+=======
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
           <AnimatePresence initial={false}>
             {messages.map((message) => (
               <motion.div
@@ -396,6 +505,7 @@ export default function ChatAI() {
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
+<<<<<<< HEAD
                 <div className={`max-w-[90%] md:max-w-[70%] flex gap-2 md:gap-3 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                   <div className={`w-7 h-7 md:w-8 md:h-8 rounded-lg flex-shrink-0 flex items-center justify-center ${message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-[#2C2C2E] border border-[#E5E5EA] dark:border-[#3A3A3C] text-blue-600'}`}>
                     {message.role === 'user' ? <User className="w-4 h-4 md:w-5 md:h-5" /> : <Bot className="w-4 h-4 md:w-5 md:h-5" />}
@@ -403,6 +513,15 @@ export default function ChatAI() {
                   
                   <div className={`space-y-2 ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <div className={`p-3 md:p-4 rounded-2xl shadow-sm ${
+=======
+                <div className={`max-w-[85%] md:max-w-[70%] flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center ${message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-[#2C2C2E] border border-[#E5E5EA] dark:border-[#3A3A3C] text-blue-600'}`}>
+                    {message.role === 'user' ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
+                  </div>
+                  
+                  <div className={`space-y-2 ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    <div className={`p-4 rounded-2xl shadow-sm ${
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
                       message.role === 'user' 
                         ? 'bg-blue-600 text-white rounded-tr-none' 
                         : 'bg-white dark:bg-[#2C2C2E] dark:text-[#F2F2F7] border border-[#E5E5EA] dark:border-[#3A3A3C] rounded-tl-none'
@@ -554,7 +673,11 @@ export default function ChatAI() {
 
       {/* Input Area */}
       <div className="bg-white dark:bg-[#2C2C2E] border-t border-[#E5E5EA] dark:border-[#3A3A3C]">
+<<<<<<< HEAD
         <div className="max-w-7xl mx-auto p-3 md:p-6">
+=======
+        <div className="max-w-7xl mx-auto p-6">
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
           <div className="max-w-4xl mx-auto">
             {selectedImage && (
               <div className="mb-4 relative inline-block">
@@ -568,6 +691,7 @@ export default function ChatAI() {
               </div>
             )}
             
+<<<<<<< HEAD
             <div className="flex items-end gap-2 md:gap-3">
               <div className="flex-1 bg-[#F2F2F7] dark:bg-[#3A3A3C] rounded-[2rem] p-1.5 md:p-2 flex items-end gap-1 md:gap-2 border border-transparent focus-within:border-blue-500/30 transition-all">
                 <button 
@@ -575,6 +699,15 @@ export default function ChatAI() {
                   className="p-2 md:p-3 text-[#8E8E93] hover:text-blue-600 transition-colors"
                 >
                   <ImageIcon className="w-5 h-5 md:w-6 md:h-6" />
+=======
+            <div className="flex items-end gap-3">
+              <div className="flex-1 bg-[#F2F2F7] dark:bg-[#3A3A3C] rounded-[2rem] p-2 flex items-end gap-2 border border-transparent focus-within:border-blue-500/30 transition-all">
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-3 text-[#8E8E93] hover:text-blue-600 transition-colors"
+                >
+                  <ImageIcon className="w-6 h-6" />
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
                 </button>
                 <input 
                   type="file" 
@@ -593,6 +726,7 @@ export default function ChatAI() {
                       handleSend();
                     }
                   }}
+<<<<<<< HEAD
                   placeholder={mode === 'chat' ? "Ask anything..." : "Describe image..."}
                   className="flex-1 bg-transparent border-none focus:ring-0 py-2 md:py-3 px-1 md:px-2 text-[#1C1C1E] dark:text-[#F2F2F7] resize-none max-h-32 text-sm"
                   rows={1}
@@ -602,34 +736,64 @@ export default function ChatAI() {
                   <button 
                     onClick={() => isLiveMode ? setIsLiveMode(false) : startListening(true)}
                     className={`p-2 md:p-3 rounded-full transition-all ${
+=======
+                  placeholder={mode === 'chat' ? "Ask anything, solve code, or upload image..." : "Describe the image you want to generate..."}
+                  className="flex-1 bg-transparent border-none focus:ring-0 py-3 px-2 text-[#1C1C1E] dark:text-[#F2F2F7] resize-none max-h-32 text-sm"
+                  rows={1}
+                />
+                
+                <div className="flex items-center gap-1 pr-2">
+                  <button 
+                    onClick={() => isLiveMode ? setIsLiveMode(false) : startListening(true)}
+                    className={`p-3 rounded-full transition-all ${
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
                       isLiveMode 
                         ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/30' 
                         : 'text-[#8E8E93] hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
                     }`}
                     title={isLiveMode ? "Stop Live Voice" : "Start Live Voice Chat"}
                   >
+<<<<<<< HEAD
                     {isLiveMode ? <MicOff className="w-5 h-5 md:w-6 md:h-6" /> : <Mic className="w-5 h-5 md:w-6 md:h-6" />}
+=======
+                    {isLiveMode ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
                   </button>
 
                   <button 
                     onClick={() => handleSend()}
                     disabled={isLoading || (!input.trim() && !selectedImage)}
+<<<<<<< HEAD
                     className={`p-2 md:p-3 rounded-full transition-all ${
+=======
+                    className={`p-3 rounded-full transition-all ${
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
                       isLoading || (!input.trim() && !selectedImage)
                         ? 'bg-[#E5E5EA] dark:bg-[#48484A] text-[#C7C7CC]'
                         : 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700'
                     }`}
                   >
+<<<<<<< HEAD
                     {isLoading ? <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin" /> : <Send className="w-5 h-5 md:w-6 md:h-6" />}
+=======
+                    {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
                   </button>
                 </div>
               </div>
             </div>
             
+<<<<<<< HEAD
             <div className="mt-3 md:mt-4 flex flex-wrap gap-2 justify-center">
               <QuickAction icon={<Code className="w-3.5 h-3.5" />} label="Fix Code" onClick={() => setInput("Can you help me fix this code? ")} />
               <QuickAction icon={<Terminal className="w-3.5 h-3.5" />} label="Explain" onClick={() => setInput("Explain the logic behind ")} />
               <QuickAction icon={<Sparkles className="w-3.5 h-3.5" />} label="Idea" onClick={() => setInput("Give me a creative idea for ")} />
+=======
+            <div className="mt-4 flex flex-wrap gap-2 justify-center">
+              <QuickAction icon={<Code className="w-3.5 h-3.5" />} label="Fix Code" onClick={() => setInput("Can you help me fix this code? ")} />
+              <QuickAction icon={<Terminal className="w-3.5 h-3.5" />} label="Explain Logic" onClick={() => setInput("Explain the logic behind ")} />
+              <QuickAction icon={<Sparkles className="w-3.5 h-3.5" />} label="Creative Idea" onClick={() => setInput("Give me a creative idea for ")} />
+>>>>>>> 7fcffe0a0c3215adf6396fb4a7b067e90c0b13c6
             </div>
           </div>
         </div>
