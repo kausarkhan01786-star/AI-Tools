@@ -1,0 +1,5 @@
+{
+  "name": "AI-TOOLS",
+  "description": "Professional AI tools for background removal, watermark removal, and intelligent chat.",
+  "requestFramePermissions": ["microphone"]
+}

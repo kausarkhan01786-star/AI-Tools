@@ -1,0 +1,128 @@
+import "dotenv/config";
+import express from "express";
+import path from "path";
+import multer from "multer";
+import axios from "axios";
+import FormData from "form-data";
+
+const app = express();
+
+// API routes
+app.get("/api/test", (req, res) => {
+  res.json({ message: "API is working!", env: process.env.NODE_ENV });
+});
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
+});
+
+app.get("/api/watermark/status", (req, res) => {
+  res.json({ photoroomConfigured: Boolean(process.env.PHOTOROOM_API_KEY) });
+});
+
+app.post("/api/watermark/remove", upload.single("image"), async (req, res) => {
+  const apiKey = process.env.PHOTOROOM_API_KEY;
+  if (!apiKey) {
+    return res.status(501).json({
+      error:
+        "PhotoRoom API key not configured. Please set PHOTOROOM_API_KEY on the server.",
+    });
+  }
+
+  const file = req.file;
+  if (!file) {
+    return res.status(400).json({
+      error: "Missing image file. Send multipart/form-data with field name 'image'.",
+    });
+  }
+
+  const prompt =
+    typeof (req.body as any)?.prompt === "string" && (req.body as any).prompt.trim()
+      ? (req.body as any).prompt.trim()
+      : "Remove all watermarks, logos, and text overlays from the image while keeping the rest unchanged. Fill removed areas naturally and seamlessly, preserving details and resolution.";
+
+  const mode =
+    typeof (req.body as any)?.mode === "string" && (req.body as any).mode.trim()
+      ? (req.body as any).mode.trim()
+      : "ai.auto";
+
+  try {
+    const form = new FormData();
+    form.append("imageFile", file.buffer, {
+      filename: file.originalname || "image.png",
+      contentType: file.mimetype || "application/octet-stream",
+    });
+    form.append("removeBackground", "false");
+    form.append("editWithAI.mode", mode);
+    form.append("editWithAI.prompt", prompt);
+
+    const upstream = await axios.post("https://image-api.photoroom.com/v2/edit", form, {
+      headers: {
+        ...form.getHeaders(),
+        "x-api-key": apiKey,
+      },
+      responseType: "arraybuffer",
+      validateStatus: () => true,
+      timeout: 120_000,
+    });
+
+    if (upstream.status >= 400) {
+      const contentType = String(upstream.headers["content-type"] || "");
+      if (contentType.includes("application/json")) {
+        try {
+          const json = JSON.parse(Buffer.from(upstream.data).toString("utf8"));
+          return res.status(upstream.status).json({
+            error: "PhotoRoom API error",
+            details: json,
+          });
+        } catch {
+          // fall through
+        }
+      }
+      return res.status(upstream.status).json({
+        error: "PhotoRoom API error",
+        details: Buffer.from(upstream.data).toString("utf8").slice(0, 2000),
+      });
+    }
+
+    res.setHeader("Content-Type", upstream.headers["content-type"] || "image/png");
+    return res.status(200).send(Buffer.from(upstream.data));
+  } catch (err: any) {
+    console.error("PhotoRoom watermark removal error:", err);
+    const message =
+      typeof err?.message === "string" ? err.message : "Failed to remove watermark.";
+    return res.status(500).json({ error: message });
+  }
+});
+
+async function startServer() {
+  const PORT = 3000;
+
+  if (process.env.NODE_ENV !== "production") {
+    // Dynamic import for Vite to avoid bundling it in production
+    const { createServer: createViteServer } = await import("vite");
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), "dist");
+    app.use(express.static(distPath));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+  }
+
+  // Only listen if not on Vercel
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
+}
+
+startServer();
+
+export default app;
